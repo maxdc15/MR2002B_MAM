@@ -4,7 +4,7 @@ const int enaPin = 6;
 const int pinChannelA = 2;
 const int pinChannelB = 3;
 int lastSpeed = 0, motorSpeed = 0;
-int count = 0;
+float count = 0;
 float vel = 0;
 
 // 1. Definir la frecuencia de interrupción deseada en Hz.
@@ -56,7 +56,7 @@ void setup() {
   TCCR1A = 0;
   TCCR1B = 0;
   TCNT1 = 0;
-  OCR1A = 624;            // (Registro de coincidencia) = [16,000,000 Hz / (preescalador * (frecuencia de interruptción deseada en Hz))] - 1
+  OCR1A = 62499;            // (Registro de coincidencia) = [16,000,000 Hz / (preescalador * (frecuencia de interruptción deseada en Hz))] - 1
   TCCR1A |= (1 << WGM12);
   TCCR1B |= (1 << CS12);  // Prescalador: 256
   TIMSK1 |= (1 << OCIE1A);
@@ -75,7 +75,7 @@ void setup() {
 // speed = count/T;
 // vel = count * (1/10);
 ISR(TIMER1_COMPA_vect) {
-  vel = count*(0.1);
+  vel = (count/22)/45;
   count = 0;
 }
 
@@ -87,6 +87,9 @@ void callback_B() { if (!digitalRead(pinChannelA)) { count++; } else { count--; 
 
 void loop() {
 
+  Serial.print("Velocidad actual: ");
+  Serial.print(vel);
+  Serial.println(" cuenta/seg");
   // Revisar que si se estén ingresando nuevos valores en el monitor serial
   if (Serial.available() > 0) {
     
@@ -126,9 +129,9 @@ void loop() {
     }
 
   }
-  Serial.print("Velocidad actual: ");
-  Serial.print(vel);
-  Serial.println(" cuenta/seg");
+
+  delay(1000);
+  
   Serial.print("Valor actual del contador: ");
   Serial.println(count);
 }
