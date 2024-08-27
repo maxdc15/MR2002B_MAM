@@ -3,8 +3,8 @@ const int in2Pin = 5;
 const int enaPin = 6;
 const int pinChannelA = 2;
 const int pinChannelB = 3;
-int lastSpeed = 0, motorSpeed = 0;
-float count = 0;
+float lastSpeed = 0, motorSpeed = 0;
+double count = 0;
 float vel = 0;
 
 // 1. Definir la frecuencia de interrupción deseada en Hz.
@@ -51,14 +51,13 @@ float vel = 0;
 // TCCR1B |= (1 << CS12) | (1 << CS11) | (1 << CS10);
 
 void setup() {
-  
   cli();
   TCCR1A = 0;
   TCCR1B = 0;
   TCNT1 = 0;
   OCR1A = 62499;            // (Registro de coincidencia) = [16,000,000 Hz / (preescalador * (frecuencia de interruptción deseada en Hz))] - 1
   TCCR1A |= (1 << WGM12);
-  TCCR1B |= (1 << CS12);  // Prescalador: 256
+  TCCR1B |= (1 << CS12);    // Prescalador: 256
   TIMSK1 |= (1 << OCIE1A);
   sei();
 
@@ -72,41 +71,48 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(pinChannelB), callback_B, FALLING);
 }
 
-// speed = count/T;
-// vel = count * (1/10);
 ISR(TIMER1_COMPA_vect) {
-  vel = (count/22)/45;
+  vel = count / 22 / 45;
   count = 0;
 }
 
-// Revisar cuando el canal A esté en alto en un ciclo de bajada del canal B
-void callback_A() { if (digitalRead(pinChannelB)) { count++; } else { count--; } }
+void callback_A() {
+  if (digitalRead(pinChannelB)) {
+    count++;
+  } else {
+    count--;
+  }
+}
 
-// Revisar cuando el canal B esté en bajo en un ciclo de bajada del canal A
-void callback_B() { if (!digitalRead(pinChannelA)) { count++; } else { count--; } } 
+void callback_B() {
+  if (!digitalRead(pinChannelA)) {
+    count++;
+  } else {
+    count--;
+  }
+}
 
 void loop() {
 
-  Serial.print("Velocidad actual: ");
-  Serial.print(vel);
-  Serial.println(" cuenta/seg");
   // Revisar que si se estén ingresando nuevos valores en el monitor serial
   if (Serial.available() > 0) {
-    
     // Leer la entrada del monitor serial cuando realmente se esté escribiendo un nuevo valor
     String input = Serial.readStringUntil('\n');
-    
-    // Convertir el valor leído como una cadena de caracteres a un valor numérico
-    motorSpeed = input.toInt();
+
+    // Convertir el valor leído a un número flotante
+    float motorInput = input.toFloat();
+
+    if (motorInput > 1.0) motorInput = 1.0;   // En caso de tener un valor mayor a 1
+    if (motorInput < -1.0) motorInput = -1.0; // En caso de tener un valor menor a -1
+
+    // Mapear el rango de -1.0 a 1.0 a -255 a 255
+    motorSpeed = motorInput * 255.0;
 
     // Verificar si el valor para la velocidad ha cambiado, de no ser así mantener el mismo
-    if(motorSpeed != lastSpeed){
-          lastSpeed = motorSpeed;
-        }
-
-    // Mantener los valores dentro del rango de representación de 8 bits ([255, -256])
-    if (lastSpeed > 255) lastSpeed = 255;   // En caso de tener un valor mayor a 255
-    if (lastSpeed < -255) lastSpeed = -255; // En caso de tener un valor menor a -255
+    if (motorSpeed != lastSpeed) {
+      lastSpeed = motorSpeed;
+      Serial.println(vel);
+    }
 
     // Dirección de giro de la cruz hacia la derecha en caso de ser un valor positivo (sentido anti-horario)
     if (lastSpeed > 0) {
@@ -127,11 +133,5 @@ void loop() {
       digitalWrite(in2Pin, LOW);
       analogWrite(enaPin, 0);
     }
-
   }
-
-  delay(1000);
-  
-  Serial.print("Valor actual del contador: ");
-  Serial.println(count);
 }
