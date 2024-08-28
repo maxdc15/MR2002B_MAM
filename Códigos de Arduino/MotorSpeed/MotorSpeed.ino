@@ -3,16 +3,13 @@ const int in2Pin = 5;
 const int enaPin = 6;
 const int pinChannelA = 2;
 const int pinChannelB = 3;
-float lastSpeed = 0, motorSpeed = 0;
-double count = 0;
-float vel = 0;
-
-// 1. Definir la frecuencia de interrupción deseada en Hz.
-// (Registro de coincidencia) = [16,000,000 Hz / (preescalador * (frecuencia de interruptción deseada en Hz))] - 1
-
-// Tabla de preescaladores para el Timer1
+double lastSpeed = 0, motorSpeed = 0;
+volatile int count = 0;
+double vel = 0;
+double pwm = 0, command, speed = 0; 
 
 /*
+Tabla de preescaladores para el Timer1
 ----------------------------------------------------------------------------------
 | CS12 | CS11 | CS10 | Prescaler        | Descripción                             |
 |------|------|------|------------------|-----------------------------------------|
@@ -51,17 +48,15 @@ float vel = 0;
 // TCCR1B |= (1 << CS12) | (1 << CS11) | (1 << CS10);
 
 void setup() {
-  cli();
-  TCCR1A = 0;
-  TCCR1B = 0;
-  TCNT1 = 0;
-  OCR1A = 62499;            // (Registro de coincidencia) = [16,000,000 Hz / (preescalador * (frecuencia de interruptción deseada en Hz))] - 1
-  TCCR1A |= (1 << WGM12);
-  TCCR1B |= (1 << CS12);    // Prescalador: 256
-  TIMSK1 |= (1 << OCIE1A);
-  sei();
+  TCCR1A = 0;               // Configuración del registro de comparación
+  TCCR1B = 0;  
+  TCNT1  = 0;  
+  OCR1A = 2499;             // Para 25 Hz (prescaler de 256)
+  TCCR1B |= (1 << WGM12);   // Modo de comparación de salida (CTC - Clear Timer on Compare Match)
+  TCCR1B |= (1 << CS12);    // Prescaler de 256
+  TIMSK1 |= (1 << OCIE1A);  // Habilita la interrupción por comparación de Timer1
 
-  Serial.begin(9600);
+  Serial.begin(2000000);
   pinMode(in1Pin, OUTPUT);
   pinMode(in2Pin, OUTPUT);
   pinMode(enaPin, OUTPUT);
@@ -72,26 +67,35 @@ void setup() {
 }
 
 ISR(TIMER1_COMPA_vect) {
-  vel = count / 22 / 45;
+  speed = float(count)*(25.0/22.0)*(1.0/45.0);
   count = 0;
 }
 
-void callback_A() {
-  if (digitalRead(pinChannelB)) {
-    count++;
-  } else {
-    count--;
+void callback_A() { if (digitalRead(pinChannelB)) {count++;} else {count--;} }
+void callback_B() { if (!digitalRead(pinChannelA)) {count++;} else {count--;} }
+
+void loop() {
+  if (Serial.available() > 0) {
+    String input = Serial.readStringUntil('\n');
+    command = input.toFloat();
+    moveMotor(command);
+    Serial.println(speed);
   }
 }
 
-void callback_B() {
-  if (!digitalRead(pinChannelA)) {
-    count++;
+void moveMotor(double data) {
+  pwm = max(-1.0, min(data, 1.0));
+  if (pwm >= 0) {
+    digitalWrite(in1Pin, HIGH);
+    digitalWrite(in2Pin, LOW);
   } else {
-    count--;
+    digitalWrite(in1Pin, LOW);
+    digitalWrite(in2Pin, HIGH);
   }
+  analogWrite(enaPin, int(255*abs(pwm)));
 }
 
+/*
 void loop() {
 
   // Revisar que si se estén ingresando nuevos valores en el monitor serial
@@ -111,7 +115,7 @@ void loop() {
     // Verificar si el valor para la velocidad ha cambiado, de no ser así mantener el mismo
     if (motorSpeed != lastSpeed) {
       lastSpeed = motorSpeed;
-      Serial.println(vel);
+      Serial.println(vel,5);
     }
 
     // Dirección de giro de la cruz hacia la derecha en caso de ser un valor positivo (sentido anti-horario)
@@ -135,3 +139,4 @@ void loop() {
     }
   }
 }
+*/
