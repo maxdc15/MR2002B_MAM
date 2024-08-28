@@ -13,6 +13,9 @@ Repositorio para el proyecto del bloque disciplinar MR2002B Análisis de Sistema
 ## Especificaciones y características del Motor con Encoder GM 25-370 12V CD de 140RPM
 ![imagen](https://github.com/user-attachments/assets/f2ca0a25-dde5-43df-bfbd-f78c9f94ba59)
 
+## Dimensiones del GM 25-370 12V con Encoder
+![AR2770-GM-25-370-Encoder-12V-DC-140RPM-dimensiones](https://github.com/user-attachments/assets/5b93746a-d34a-42c7-b6ee-37bcd60cf8f8)
+
 ## Pinout del doble Puente H TB6612FNG
 ![arduino-TB6612FNG-esquema](https://github.com/user-attachments/assets/a2a8d00e-f204-4f13-8b31-caa681dcfb0a)
 
