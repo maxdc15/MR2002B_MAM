@@ -2,10 +2,15 @@
 
 Repositorio para el proyecto del bloque disciplinar MR2002B Análisis de Sistemas de Control
 
+# Características y pinout de los materiales utilizados
+
 ## Pinout del encoder y motor de corriente directa
 ![imagen](https://github.com/user-attachments/assets/f29e247d-5a8a-44ae-a773-ea89f6fa4b0c)
 
-## GM 25-370 Motor con Encoder 12V DC 140RPM
+## Especificaciones y características del encoder
+![imagen](https://github.com/user-attachments/assets/edb90a27-83ea-4652-a8f5-c795eb59ca78)
+
+## Especificaciones y características del Motor con Encoder GM 25-370 12V CD de 140RPM
 ![imagen](https://github.com/user-attachments/assets/f2ca0a25-dde5-43df-bfbd-f78c9f94ba59)
 
 ## Pinout del doble Puente H TB6612FNG
