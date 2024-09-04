@@ -1,8 +1,7 @@
-clc
-clearvars
+clc, clearvars, close all;
 
 % Configuración de la comunicación serial con la placa Arduino
-serialPort = 'COM4'; 
+serialPort = 'COM6'; 
 baudRate = 2000000;
 s = serialport(serialPort, baudRate);
 
@@ -10,12 +9,12 @@ s = serialport(serialPort, baudRate);
 f = 0.06;             % Frecuencia de la señal
 
 % Definir duración de transmisión en segundos
-duration = 15;
-
+duration = 10;
+numSamples = 10000;
 % Inicialización de los vectores para almacenar los datos enviados y recibidos
 sentData = [];
 receivedData = [];
-timeData = [];  % Vector para almacenar el tiempo real
+timeData = [];
 
 tic;  % Iniciar temporizador
 disp('Transmisión comenzada.');
@@ -24,9 +23,9 @@ while toc < duration
     t_current = toc;
     
     % Generar la señal sinusoidal en el tiempo actual
-    sinusoidal_signal = 1*sin(2 * pi * f * t_current);
+    %sinusoidal_signal = 0.4*sin(2 * pi * f * t_current) + 0.045;
 
-    %sinusoidal_signal = 0.5*(t_current > 1);
+    sinusoidal_signal = 1*(t_current > 2) + 0.04;
     
     % Enviar dato por el puerto serial
     writeline(s, num2str(sinusoidal_signal));
@@ -45,7 +44,7 @@ while toc < duration
     end
     timeData = [timeData, t_current];
     % Pausa para sincronizar con la recepción (opcional, ajustar según sea necesario)
-    pause(0.001);
+    pause(0.000000001);
 end
 
 % Enviar señal de finalización
@@ -67,7 +66,11 @@ legend;
 xlabel('Tiempo (s)');
 ylabel('Señal');
 title('Comparación de señales enviada y recibida');
+%yticks(0:0.001:3);
+xticks(0:0.01:3);
+axis([0 10 -1 2])
 
 Sampling_Time_done = mean(diff(timeData));
 disp("Tiempo de muestreo = " + Sampling_Time_done  + " seg")
 disp("Frecuencia de muestreo = " + (1/Sampling_Time_done) + " Hz")
+
